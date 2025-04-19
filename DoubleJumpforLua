@@ -1,0 +1,61 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local doubleJumpForce = 50 -- Adjust for jump height (50 = similar to default jump)
+
+-- Function to set up double jump for a character
+local function setupDoubleJump(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    local rootPart = character:WaitForChild("HumanoidRootPart")
+    local canDoubleJump = false
+    local hasDoubleJumped = false
+
+    -- Track grounded state
+    local floorConnection = humanoid:GetPropertyChangedSignal("FloorMaterial"):Connect(function()
+        if humanoid.FloorMaterial == Enum.Material.Air then
+            if not hasDoubleJumped then
+                canDoubleJump = true
+            end
+        else
+            canDoubleJump = false
+            hasDoubleJumped = false
+        end
+    end)
+
+    -- Handle jump input
+    local inputConnection = UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+        if input.KeyCode == Enum.KeyCode.Space and not gameProcessedEvent then
+            if canDoubleJump and not hasDoubleJumped then
+                -- Apply upward velocity for double jump
+                local bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.MaxForce = Vector3.new(0, math.huge, 0)
+                bodyVelocity.Velocity = Vector3.new(0, doubleJumpForce, 0)
+                bodyVelocity.Parent = rootPart
+                game.Debris:AddItem(bodyVelocity, 0.1)
+                hasDoubleJumped = true
+                -- Visual effect
+                local sparkles = Instance.new("Sparkles")
+                sparkles.SparkleColor = Color3.fromRGB(255, 255, 0)
+                sparkles.Parent = rootPart
+                game.Debris:AddItem(sparkles, 1)
+            end
+        end
+    end)
+
+    -- Clean up connections when character is removed
+    character.AncestryChanged:Connect(function()
+        if not character:IsDescendantOf(game) then
+            floorConnection:Disconnect()
+            inputConnection:Disconnect()
+        end
+    end)
+end
+
+-- Set up for current character
+if player.Character then
+    setupDoubleJump(player.Character)
+end
+
+-- Handle character respawn
+player.CharacterAdded:Connect(setupDoubleJump)
