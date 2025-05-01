@@ -1,0 +1,35 @@
+local ContextActionService = game:GetService("ContextActionService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Track Alt key state
+local isAltPressed = false
+
+-- Handle Alt key press
+local function handleAlt(actionName, inputState, inputObject)
+    if inputState == Enum.UserInputState.Begin then
+        isAltPressed = true
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default -- Free cursor
+    elseif inputState == Enum.UserInputState.End then
+        isAltPressed = false
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter -- Lock cursor
+    end
+    return Enum.ContextActionResult.Sink
+end
+
+-- Bind Alt key
+ContextActionService:BindAction("ToggleCursor", handleAlt, false, Enum.KeyCode.LeftAlt, Enum.KeyCode.RightAlt)
+
+-- Force MouseBehavior on each frame to counter overrides
+RunService.RenderStepped:Connect(function()
+    if isAltPressed then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+    else
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+    end
+end)
+
+-- Cleanup on script destroy
+game:BindToClose(function()
+    ContextActionService:UnbindAction("ToggleCursor")
+end)
