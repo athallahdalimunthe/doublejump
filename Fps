@@ -10,9 +10,11 @@ local function handleAlt(actionName, inputState, inputObject)
     if inputState == Enum.UserInputState.Begin then
         isAltPressed = true
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default -- Free cursor
+        UserInputService.MouseIconEnabled = true -- Show cursor
     elseif inputState == Enum.UserInputState.End then
         isAltPressed = false
         UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter -- Lock cursor
+        UserInputService.MouseIconEnabled = false -- Hide cursor
     end
     return Enum.ContextActionResult.Sink
 end
@@ -20,16 +22,22 @@ end
 -- Bind Alt key
 ContextActionService:BindAction("ToggleCursor", handleAlt, false, Enum.KeyCode.LeftAlt, Enum.KeyCode.RightAlt)
 
--- Force MouseBehavior on each frame to counter overrides
+-- Force MouseBehavior and cursor visibility on each frame to counter overrides
 RunService.RenderStepped:Connect(function()
     if isAltPressed then
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        UserInputService.MouseIconEnabled = true
     else
         UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+        UserInputService.MouseIconEnabled = false
     end
 end)
+
+-- Initialize cursor state
+UserInputService.MouseIconEnabled = false -- Hide cursor by default
 
 -- Cleanup on script destroy
 game:BindToClose(function()
     ContextActionService:UnbindAction("ToggleCursor")
+    UserInputService.MouseIconEnabled = true -- Restore default cursor visibility
 end)
