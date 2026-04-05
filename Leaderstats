@@ -1,0 +1,16 @@
+game.Players.PlayerAdded:Connect(function(player)
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = player
+
+	local sugar = Instance.new("IntValue")
+	sugar.Name = "Sugar"
+	sugar.Value = 0
+	sugar.Parent = leaderstats
+
+
+	local magnet = Instance.new("NumberValue")
+	magnet.Name = "Magnet"
+	magnet.Value = 20 -- bigger = easier game
+	magnet.Parent = player
+end)
