@@ -1,0 +1,22 @@
+local debounce = false
+
+script.Parent.Touched:Connect(function(hit)
+	if debounce then return end
+
+	local character = hit.Parent
+	local player = game.Players:GetPlayerFromCharacter(character)
+
+	if not player then return end
+
+	debounce = true
+
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if not leaderstats then return end
+
+	local sugar = leaderstats:FindFirstChild("Sugar")
+	if not sugar then return end
+
+	sugar.Value += 10
+
+	script.Parent:Destroy()
+end)
