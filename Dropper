@@ -1,0 +1,19 @@
+local ServerStorage = game:GetService("ServerStorage")
+local sugarTemplate = ServerStorage.Drops:WaitForChild("Sugar")
+
+while true do
+	task.wait(0.2)
+
+	local sugar = sugarTemplate:Clone()
+
+	sugar.Position = Vector3.new(
+		math.random(-50,50),
+		30,
+		math.random(-50,50)
+	)
+
+	sugar.Parent = workspace
+
+	-- slow fall
+	sugar.AssemblyLinearVelocity = Vector3.new(0, -12, 0)
+end
