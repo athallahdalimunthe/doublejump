@@ -1,0 +1,21 @@
+script.Parent.Touched:Connect(function(hit)
+	local player = game.Players:GetPlayerFromCharacter(hit.Parent)
+	if not player then return end
+
+	local stats = player:FindFirstChild("leaderstats")
+	if not stats then return end
+
+	local sugar = stats:FindFirstChild("Sugar")
+	local magnet = player:FindFirstChild("Magnet")
+
+	if not sugar or not magnet then return end
+
+	local cost = 50
+
+	if sugar.Value >= cost then
+		sugar.Value -= cost
+		magnet.Value += 50000000
+
+		print(player.Name .. " upgraded magnet!")
+	end
+end)
