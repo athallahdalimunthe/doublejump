@@ -1,0 +1,22 @@
+while true do
+	task.wait(0.05)
+
+	for _, player in pairs(game.Players:GetPlayers()) do
+		local char = player.Character
+		if not char then continue end
+
+		local root = char:FindFirstChild("HumanoidRootPart")
+		if not root then continue end
+
+		for _, obj in pairs(workspace:GetChildren()) do
+			if obj:IsA("Part") and obj.Name == "Sugar" then
+
+				local dist = (obj.Position - root.Position).Magnitude
+
+				if dist < 40 then
+					obj.Position = obj.Position:Lerp(root.Position, 0.5)
+				end
+			end
+		end
+	end
+end
