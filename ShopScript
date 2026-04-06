@@ -1,0 +1,9 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local event = ReplicatedStorage:WaitForChild("OpenShop")
+
+local prompt = workspace:WaitForChild("ShopTrigger"):WaitForChild("ProximityPrompt")
+
+prompt.Triggered:Connect(function(player)
+	print(player.Name .. " opened shop") -- debug
+	event:FireClient(player)
+end)
