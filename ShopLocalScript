@@ -1,0 +1,51 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local openEvent = ReplicatedStorage:WaitForChild("OpenShop")
+local buyEvent = ReplicatedStorage:WaitForChild("BuyUpgrade")
+
+local player = game.Players.LocalPlayer
+local ui = script.Parent
+local frame = ui:WaitForChild("Frame")
+
+local magnetBtn = frame:WaitForChild("MagnetButton")
+local speedBtn = frame:WaitForChild("SpeedButton")
+
+
+-- OPEN SHOP
+openEvent.OnClientEvent:Connect(function()
+	print("SHOP OPEN EVENT RECEIVED")
+	if not frame.Visible then
+		frame.Visible = true
+	end
+end)
+
+-- BUTTONS
+magnetBtn.MouseButton1Click:Connect(function()
+	buyEvent:FireServer("Magnet")
+end)
+
+speedBtn.MouseButton1Click:Connect(function()
+	buyEvent:FireServer("Speed")
+end)
+
+
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local shopPart = workspace:WaitForChild("ShopTrigger")
+
+RunService.RenderStepped:Connect(function()
+	if not frame.Visible then return end
+
+	local char = player.Character
+	if not char then return end
+
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+
+	local dist = (root.Position - shopPart.Position).Magnitude
+
+	if dist > 15 then
+		frame.Visible = false
+	end
+end)
