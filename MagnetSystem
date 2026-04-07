@@ -6,15 +6,22 @@ while true do
 		if not char then continue end
 
 		local root = char:FindFirstChild("HumanoidRootPart")
-		if not root then continue end
+		local magnet = player:FindFirstChild("Magnet")
+
+		if not root or not magnet then continue end
 
 		for _, obj in pairs(workspace:GetChildren()) do
 			if obj:IsA("Part") and obj.Name == "Sugar" then
 
 				local dist = (obj.Position - root.Position).Magnitude
 
-				if dist < 40 then
-					obj.Position = obj.Position:Lerp(root.Position, 0.5)
+				-- RANGE scales
+				if dist < magnet.Value then
+
+					-- SPEED scales 🔥
+					local strength = math.clamp(magnet.Value / 50, 0.2, 1)
+
+					obj.Position = obj.Position:Lerp(root.Position, strength)
 				end
 			end
 		end
