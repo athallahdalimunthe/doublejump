@@ -1,0 +1,38 @@
+game.Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(character)
+
+		local petTemplate = game.ServerStorage:WaitForChild("Glob")
+		local pet = petTemplate:Clone()
+		pet.Parent = workspace
+
+		local root = character:WaitForChild("HumanoidRootPart")
+
+		-- FLOAT SETTINGS
+		local height = 3
+		local distance = 4
+		local floatSpeed = 2
+
+		local time = 0
+
+		while character.Parent do
+			time += task.wait()
+
+			local floatY = math.sin(time * floatSpeed) * 0.5
+
+			local targetPos =
+				root.Position
+				+ root.CFrame.RightVector * distance
+				+ Vector3.new(0, height + floatY, 0)
+
+			if pet.PrimaryPart then
+				pet:SetPrimaryPartCFrame(
+					pet.PrimaryPart.CFrame:Lerp(
+						CFrame.new(targetPos),
+						0.1
+					)
+				)
+			end
+		end
+
+	end)
+end)
