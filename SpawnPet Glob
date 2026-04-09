@@ -1,0 +1,17 @@
+game.Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(character)
+
+		local pet = game.ServerStorage.Pet:Clone()
+		pet.Parent = workspace
+
+		-- Attach to player
+		local root = character:WaitForChild("HumanoidRootPart")
+
+		while character.Parent do
+			local target = root.Position + Vector3.new(3,0,3)
+			pet.Position = pet.Position:Lerp(target, 0.1)
+			wait(0.03)
+		end
+
+	end)
+end)
