@@ -14,7 +14,7 @@ script.Parent.Touched:Connect(function(hit)
 
 	if sugar.Value >= cost then
 		sugar.Value -= cost
-		magnet.Value += 50000000
+		magnet.Value += 5000
 
 		print(player.Name .. " upgraded magnet!")
 	end
