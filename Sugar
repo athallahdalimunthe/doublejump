@@ -1,22 +1,64 @@
 local debounce = false
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 script.Parent.Touched:Connect(function(hit)
 	if debounce then return end
 
-	local character = hit.Parent
-	local player = game.Players:GetPlayerFromCharacter(character)
-
+	local player = game.Players:GetPlayerFromCharacter(hit.Parent)
 	if not player then return end
 
 	debounce = true
 
-	local leaderstats = player:FindFirstChild("leaderstats")
-	if not leaderstats then return end
+	local stats = player:FindFirstChild("leaderstats")
+	local sugarStat = stats and stats:FindFirstChild("Sugar")
 
-	local sugar = leaderstats:FindFirstChild("Sugar")
-	if not sugar then return end
+	local reward = 10
 
-	sugar.Value += 10
+	if sugarStat then
+		sugarStat.Value += reward
+	end
 
+	-- 💰 FLOATING TEXT
+	local template = ReplicatedStorage:FindFirstChild("FloatText")
+	if template then
+		local clone = template:Clone()
+
+		clone.Adornee = script.Parent
+		clone.Parent = script.Parent
+
+		local label = clone:FindFirstChildOfClass("TextLabel")
+		if label then
+			label.Text = "+" .. reward
+
+			if reward >= 100 then
+				label.TextColor3 = Color3.fromRGB(255, 0, 0) -- big reward = red
+			elseif reward >= 50 then
+				label.TextColor3 = Color3.fromRGB(255, 170, 0) -- orange
+			else
+				label.TextColor3 = Color3.fromRGB(255, 255, 0) -- yellow
+			end
+		end
+
+		-- animate
+		task.spawn(function()
+			for i = 1, 20 do
+				clone.StudsOffset = clone.StudsOffset + Vector3.new(0, 0.1, 0)
+				label.TextTransparency += 0.05
+				task.wait(0.03)
+			end
+			clone:Destroy()
+		end)
+	end
+
+	-- effects
+	script.Parent.Transparency = 1
+
+	local sound = script.Parent:FindFirstChild("Sound")
+	if sound then sound:Play() end
+
+	local particle = script.Parent:FindFirstChild("ParticleEmitter")
+	if particle then particle:Emit(20) end
+
+	task.wait(0.1)
 	script.Parent:Destroy()
 end)
