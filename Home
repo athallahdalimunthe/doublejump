@@ -1,0 +1,12 @@
+local button = script.Parent
+local player = game.Players.LocalPlayer
+
+button.MouseButton1Click:Connect(function()
+	local house = workspace:WaitForChild("House0")
+	local spawn = house:WaitForChild("Spawn")
+
+	local character = player.Character or player.CharacterAdded:Wait()
+	local root = character:WaitForChild("HumanoidRootPart")
+
+	root.CFrame = spawn.CFrame + Vector3.new(0, 3, 0)
+end)
