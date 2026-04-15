@@ -1,0 +1,31 @@
+local event = game.ReplicatedStorage:WaitForChild("FeedPet")
+
+event.OnServerEvent:Connect(function(player, sugarType)
+	local stats = player:FindFirstChild("leaderstats")
+	if not stats then return end
+
+	local sugar = stats:FindFirstChild(sugarType)
+	if not sugar then return end
+
+	if sugar.Value <= 0 then
+		print("NO SUGAR")
+		return
+	end
+
+	-- remove 1 sugar
+	sugar.Value -= 1
+
+	-- find player's Glob
+	for _, pet in pairs(workspace:GetChildren()) do
+		if pet.Name == "Glob" and pet:GetAttribute("Owner") == player.UserId then
+
+			print("FED:", sugarType)
+
+			-- simple effect (you can change later)
+			if pet.PrimaryPart then
+				pet.PrimaryPart.Size += Vector3.new(0.3, 0.3, 0.3)
+			end
+
+		end
+	end
+end)
