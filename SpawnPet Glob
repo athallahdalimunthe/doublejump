@@ -1,8 +1,8 @@
 game.Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function(character)
 
-		local pet = game.ServerStorage.Pet:Clone()
-		pet.Parent = workspace
+		local Glob = game.ServerStorage.Pet:Clone()
+		Glob.Parent = workspace
 
 		-- Attach to player
 		local root = character:WaitForChild("HumanoidRootPart")
