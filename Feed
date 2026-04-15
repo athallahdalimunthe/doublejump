@@ -1,0 +1,17 @@
+local event = game.ReplicatedStorage:WaitForChild("FeedPet")
+
+script.Parent.GammaButton.MouseButton1Click:Connect(function()
+	event:FireServer("GammaSugar")
+end)
+
+script.Parent.BlotButton.MouseButton1Click:Connect(function()
+	event:FireServer("BlotSugar")
+end)
+
+script.Parent.AlienButton.MouseButton1Click:Connect(function()
+	event:FireServer("AlienSugar")
+end)
+
+script.Parent.TearButton.MouseButton1Click:Connect(function()
+	event:FireServer("TearSugar")
+end)
