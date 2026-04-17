@@ -1,0 +1,59 @@
+local character = script.Parent
+local humanoid = character:WaitForChild("Humanoid")
+local root = character:WaitForChild("HumanoidRootPart")
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- SETTINGS
+local maxJumps = 8
+local jumpPower = 87
+
+local jumpCount = 0
+local canJump = true
+
+-- Reset when touching ground
+humanoid.StateChanged:Connect(function(old, new)
+	if new == Enum.HumanoidStateType.Landed then
+		jumpCount = 0
+		canJump = true
+	end
+end)
+
+-- Detect space press manually
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	if input.KeyCode == Enum.KeyCode.Space then
+		if jumpCount < maxJumps and canJump then
+			jumpCount += 1
+
+			-- FORCE jump
+			root.Velocity = Vector3.new(
+				root.Velocity.X,
+				jumpPower,
+				root.Velocity.Z
+			)
+
+			canJump = false
+
+			-- small delay to prevent spam glitch
+			task.delay(0.1, function()
+				canJump = true
+			end)
+		end
+	end
+end)
+
+-- OPTIONAL: slight air control
+RunService.RenderStepped:Connect(function()
+	if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+		local moveDir = humanoid.MoveDirection
+
+		root.Velocity += Vector3.new(
+			moveDir.X * 2,
+			0,
+			moveDir.Z * 2
+		)
+	end
+end)
