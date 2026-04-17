@@ -1,0 +1,21 @@
+local player = game.Players.LocalPlayer
+local textLabel = script.Parent
+local jumpsLeftValue = Instance.new("IntValue")
+
+-- wait for character
+local character = player.Character or player.CharacterAdded:Wait()
+
+-- wait for shared value from BalanceController
+local jumpsValue = character:WaitForChild("JumpsLeft")
+
+-- update UI
+local function updateText()
+	textLabel.Text = "Jumps: " .. jumpsValue.Value
+end
+
+updateText()
+
+-- update whenever value changes
+jumpsValue:GetPropertyChangedSignal("Value"):Connect(function()
+	updateText()
+end)
