@@ -8,6 +8,7 @@ local RunService = game:GetService("RunService")
 -- SETTINGS
 local maxJumps = 8
 local jumpPower = 87
+local rechargeRate = 1 -- seconds per jump
 
 local jumpCount = 0
 local canJump = true
@@ -21,9 +22,7 @@ jumpsLeftValue.Parent = character
 -- Reset when touching ground
 humanoid.StateChanged:Connect(function(old, new)
 	if new == Enum.HumanoidStateType.Landed then
-		jumpCount = 0
 		canJump = true
-		jumpsLeftValue.Value = maxJumps
 	end
 end)
 
@@ -63,5 +62,24 @@ RunService.RenderStepped:Connect(function()
 			0,
 			moveDir.Z * 2
 		)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(rechargeRate)
+
+		-- only recharge when NOT full
+		if jumpsLeftValue.Value < maxJumps then
+
+			-- optional: only recharge when on ground
+			if humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
+
+				jumpsLeftValue.Value += 1
+
+				-- sync jumpCount with UI
+				jumpCount = maxJumps - jumpsLeftValue.Value
+			end
+		end
 	end
 end)
