@@ -12,11 +12,18 @@ local jumpPower = 87
 local jumpCount = 0
 local canJump = true
 
+
+local jumpsLeftValue = Instance.new("IntValue")
+jumpsLeftValue.Name = "JumpsLeft"
+jumpsLeftValue.Value = maxJumps
+jumpsLeftValue.Parent = character
+
 -- Reset when touching ground
 humanoid.StateChanged:Connect(function(old, new)
 	if new == Enum.HumanoidStateType.Landed then
 		jumpCount = 0
 		canJump = true
+		jumpsLeftValue.Value = maxJumps
 	end
 end)
 
@@ -27,6 +34,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == Enum.KeyCode.Space then
 		if jumpCount < maxJumps and canJump then
 			jumpCount += 1
+			jumpsLeftValue.Value = maxJumps - jumpCount
 
 			-- FORCE jump
 			root.Velocity = Vector3.new(
