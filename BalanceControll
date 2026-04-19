@@ -1,0 +1,88 @@
+local character = script.Parent
+local humanoid = character:WaitForChild("Humanoid")
+local root = character:WaitForChild("HumanoidRootPart")
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+
+-- SETTINGS
+local maxJumps = 8
+local jumpPower = 87
+local rechargeRate = 1 -- seconds per jump
+
+local jumpCount = 0
+local canJump = true
+
+
+local jumpsLeftValue = Instance.new("IntValue")
+jumpsLeftValue.Name = "JumpsLeft"
+jumpsLeftValue.Value = maxJumps
+jumpsLeftValue.Parent = character
+
+-- Reset when touching ground
+humanoid.StateChanged:Connect(function(old, new)
+	if new == Enum.HumanoidStateType.Landed then
+		canJump = true
+	end
+end)
+
+-- Detect space press manually
+local UserInputService = game:GetService("UserInputService")
+
+UserInputService.JumpRequest:Connect(function()
+	if jumpCount < maxJumps and canJump then
+		jumpCount += 1
+
+		-- apply jump
+		root.Velocity = Vector3.new(
+			root.Velocity.X,
+			jumpPower,
+			root.Velocity.Z
+			
+		)
+		
+		
+		-- update UI
+		jumpsLeftValue.Value = maxJumps - jumpCount
+
+		canJump = false
+
+		task.delay(0.1, function()
+			canJump = true
+		end)
+	end
+end)
+
+
+-- OPTIONAL: slight air control
+RunService.RenderStepped:Connect(function()
+	if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+		local moveDir = humanoid.MoveDirection
+
+		root.Velocity += Vector3.new(
+			moveDir.X * 2,
+			0,
+			moveDir.Z * 2
+		)
+	end
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(rechargeRate)
+
+		-- only recharge when NOT full
+		if jumpsLeftValue.Value < maxJumps then
+
+			-- optional: only recharge when on ground
+			if humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
+
+				jumpsLeftValue.Value += 1
+
+				-- sync jumpCount with UI
+				jumpCount = maxJumps - jumpsLeftValue.Value
+			end
+		end
+	end
+end)
