@@ -1,0 +1,105 @@
+local players = game:GetService("Players")
+
+local participateSpot = workspace:WaitForChild("ParticipateSpot")
+local lobbySpawn = workspace:WaitForChild("SpawnPoint")
+local waitingRoom = workspace:WaitForChild("WaitingRoom")
+
+local levelsFolder = workspace:WaitForChild("Levels")
+
+local runProject = levelsFolder:WaitForChild("RunProject")
+local bottomToHeaven = levelsFolder:WaitForChild("BottomToHeaven")
+
+local runSpawn = runProject:WaitForChild("Spawn")
+local runEnded = runProject:WaitForChild("RunEnded")
+
+local heavenSpawn = bottomToHeaven:WaitForChild("Spawn")
+
+-- SETTINGS
+local minPlayers = 1
+local countdownTime = 15
+
+local queue = {}
+local survivors = {}
+local gameRunning = false
+
+-- TELEPORT
+local function teleport(player, part)
+	if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		player.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0,5,0)
+	end
+end
+
+-- JOIN QUEUE
+participateSpot.Touched:Connect(function(hit)
+	local player = players:GetPlayerFromCharacter(hit.Parent)
+
+	if player and not table.find(queue, player) then
+		table.insert(queue, player)
+		print(player.Name .. " joined queue")
+	end
+end)
+
+-- RUN END
+runEnded.Touched:Connect(function(hit)
+	local player = players:GetPlayerFromCharacter(hit.Parent)
+
+	if player and not table.find(survivors, player) then
+		table.insert(survivors, player)
+
+		print(player.Name .. " finished RunProject")
+
+		teleport(player, waitingRoom)
+	end
+end)
+
+-- MAIN LOOP
+while true do
+	task.wait(1)
+
+	if not gameRunning and #queue >= minPlayers then
+		gameRunning = true
+
+		print("Game starting...")
+
+		-- COUNTDOWN
+		for i = countdownTime, 1, -1 do
+			print("Starting in:", i)
+			task.wait(1)
+		end
+
+		-- START RUNPROJECT
+		survivors = {}
+
+		for _, player in pairs(queue) do
+			teleport(player, runSpawn)
+		end
+
+		print("RunProject started")
+
+		-- WAIT FOR ROUND
+		task.wait(20)
+
+		-- WAITING ROOM BREAK
+		task.wait(10)
+
+		-- NEXT LEVEL (ONLY SURVIVORS)
+		for _, player in pairs(survivors) do
+			teleport(player, heavenSpawn)
+		end
+
+		print("BottomToHeaven started")
+
+		task.wait(20)
+
+		-- BACK TO LOBBY
+		for _, player in pairs(players:GetPlayers()) do
+			teleport(player, lobbySpawn)
+		end
+
+		print("Game ended")
+
+		queue = {}
+		survivors = {}
+		gameRunning = false
+	end
+end
