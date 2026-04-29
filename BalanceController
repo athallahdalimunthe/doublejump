@@ -13,11 +13,17 @@ local rechargeRate = 1 -- seconds per jump
 local jumpCount = 0
 local canJump = true
 
-
+-- UI VALUE
 local jumpsLeftValue = Instance.new("IntValue")
 jumpsLeftValue.Name = "JumpsLeft"
 jumpsLeftValue.Value = maxJumps
 jumpsLeftValue.Parent = character
+
+-- 🔊 JUMP SOUND
+local jumpSound = Instance.new("Sound")
+jumpSound.SoundId = "rbxassetid://12222225" -- you can change this
+jumpSound.Volume = 1
+jumpSound.Parent = root
 
 -- Reset when touching ground
 humanoid.StateChanged:Connect(function(old, new)
@@ -26,33 +32,35 @@ humanoid.StateChanged:Connect(function(old, new)
 	end
 end)
 
--- Detect space press manually
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
+-- JUMP SYSTEM (works PC + mobile)
+UserInputService.JumpRequest:Connect(function()
+	if jumpCount < maxJumps and canJump then
+		jumpCount += 1
 
-	if input.KeyCode == Enum.KeyCode.Space then
-		if jumpCount < maxJumps and canJump then
-			jumpCount += 1
-			jumpsLeftValue.Value = maxJumps - jumpCount
+		-- apply jump
+		root.Velocity = Vector3.new(
+			root.Velocity.X,
+			jumpPower,
+			root.Velocity.Z
+		)
 
-			-- FORCE jump
-			root.Velocity = Vector3.new(
-				root.Velocity.X,
-				jumpPower,
-				root.Velocity.Z
-			)
+		-- 🔊 PLAY SOUND (safe replay)
+		jumpSound.PlaybackSpeed = math.random(90,110) / 100
+		jumpSound:Stop()
+		jumpSound:Play()
 
-			canJump = false
+		-- update UI
+		jumpsLeftValue.Value = maxJumps - jumpCount
 
-			-- small delay to prevent spam glitch
-			task.delay(0.1, function()
-				canJump = true
-			end)
-		end
+		canJump = false
+
+		task.delay(0.1, function()
+			canJump = true
+		end)
 	end
 end)
 
--- OPTIONAL: slight air control
+-- AIR CONTROL
 RunService.RenderStepped:Connect(function()
 	if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
 		local moveDir = humanoid.MoveDirection
@@ -65,14 +73,12 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
+-- RECHARGE SYSTEM
 task.spawn(function()
 	while true do
 		task.wait(rechargeRate)
 
-		-- only recharge when NOT full
 		if jumpsLeftValue.Value < maxJumps then
-
-			-- optional: only recharge when on ground
 			if humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
 
 				jumpsLeftValue.Value += 1
