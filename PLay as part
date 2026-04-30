@@ -1,0 +1,55 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+player.CharacterAdded:Connect(function(character)
+	task.wait(0.1)
+
+	local humanoid = character:WaitForChild("Humanoid")
+	local rootPart = character:WaitForChild("HumanoidRootPart")
+
+	-- Stop all animations
+	local animator = humanoid:FindFirstChildOfClass("Animator")
+	if animator then
+		for _, track in pairs(animator:GetPlayingAnimationTracks()) do
+			track:Stop()
+		end
+	end
+
+	-- Disable auto-rotate (stops the drifting spin)
+	humanoid.AutoRotate = false
+
+	-- Hide default character parts
+	for _, part in pairs(character:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.Transparency = 1
+			part.CanCollide = false  -- let BalanceBoi handle collision
+		end
+		if part:IsA("Decal") or part:IsA("SpecialMesh") then
+			part:Destroy()
+		end
+	end
+
+	-- Keep HumanoidRootPart collidable so you don't fall through
+	rootPart.CanCollide = true
+	rootPart.Transparency = 1
+
+	-- Grab BalanceBoi from Workspace
+	local balanceBoi = workspace:FindFirstChild("BalanceBoi")
+	if not balanceBoi then
+		warn("BalanceBoi not found in Workspace!")
+		return
+	end
+
+	local clone = balanceBoi:Clone()
+	clone.Parent = character
+	clone.CFrame = rootPart.CFrame
+	clone.CanCollide = false  -- root part handles it
+
+	local weld = Instance.new("WeldConstraint")
+	weld.Part0 = rootPart
+	weld.Part1 = clone
+	weld.Parent = clone
+
+	-- Re-enable rotation to face movement direction
+	humanoid.AutoRotate = true
+end)
