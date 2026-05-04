@@ -1,55 +1,72 @@
+-- PlayAsPart (StarterCharacterScripts > LocalScript)
+-- BalanceBoi must be in ReplicatedStorage
+-- Part is invisible, Decal is visible, collision on rootPart
+
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
 
-player.CharacterAdded:Connect(function(character)
-	task.wait(0.1)
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
 
-	local humanoid = character:WaitForChild("Humanoid")
-	local rootPart = character:WaitForChild("HumanoidRootPart")
+task.wait(0.2)
 
-	-- Stop all animations
-	local animator = humanoid:FindFirstChildOfClass("Animator")
-	if animator then
-		for _, track in pairs(animator:GetPlayingAnimationTracks()) do
-			track:Stop()
-		end
+-- Stop animations
+local animator = humanoid:FindFirstChildOfClass("Animator")
+if animator then
+	for _, track in pairs(animator:GetPlayingAnimationTracks()) do
+		track:Stop()
 	end
+end
 
-	-- Disable auto-rotate (stops the drifting spin)
-	humanoid.AutoRotate = false
+humanoid.AutoRotate = false
 
-	-- Hide default character parts
-	for _, part in pairs(character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Transparency = 1
-			part.CanCollide = false  -- let BalanceBoi handle collision
-		end
-		if part:IsA("Decal") or part:IsA("SpecialMesh") then
-			part:Destroy()
-		end
+-- Hide default character parts + destroy their decals/meshes
+for _, part in pairs(character:GetDescendants()) do
+	if part:IsA("BasePart") and part ~= rootPart then
+		part.Transparency = 1
+		part.CanCollide = false
 	end
-
-	-- Keep HumanoidRootPart collidable so you don't fall through
-	rootPart.CanCollide = true
-	rootPart.Transparency = 1
-
-	-- Grab BalanceBoi from Workspace
-	local balanceBoi = workspace:FindFirstChild("BalanceBoi")
-	if not balanceBoi then
-		warn("BalanceBoi not found in Workspace!")
-		return
+	if part:IsA("Decal") or part:IsA("SpecialMesh") then
+		part:Destroy()
 	end
+end
 
-	local clone = balanceBoi:Clone()
-	clone.Parent = character
-	clone.CFrame = rootPart.CFrame
-	clone.CanCollide = false  -- root part handles it
+-- RootPart: invisible, handles all collision
+rootPart.Transparency = 1
+rootPart.CanCollide = true
 
-	local weld = Instance.new("WeldConstraint")
-	weld.Part0 = rootPart
-	weld.Part1 = clone
-	weld.Parent = clone
+-- Grab BalanceBoi from ReplicatedStorage
+local balanceBoi = ReplicatedStorage:FindFirstChild("BalanceBoi")
+if not balanceBoi then
+	warn("BalanceBoi not found in ReplicatedStorage!")
+	return
+end
 
-	-- Re-enable rotation to face movement direction
-	humanoid.AutoRotate = true
-end)
+local clone = balanceBoi:Clone()
+clone.Name = "BalanceBoi"
+clone.Transparency = 1        -- Part bg invisible
+clone.CanCollide = false      -- rootPart handles collision
+clone.Anchored = false
+clone.CastShadow = false
+clone.Parent = character
+clone.CFrame = rootPart.CFrame
+
+-- Keep the Decal visible
+for _, child in pairs(clone:GetChildren()) do
+	if child:IsA("Decal") then
+		child.Transparency = 0  -- fully visible
+	end
+end
+
+-- Weld to rootPart
+local weld = Instance.new("WeldConstraint")
+weld.Part0 = rootPart
+weld.Part1 = clone
+weld.Parent = clone
+
+humanoid.AutoRotate = true
+
+print("[Balance Boi] BalanceBoi applied! 🎉")
