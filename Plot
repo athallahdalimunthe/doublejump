@@ -1,0 +1,67 @@
+local plotsFolder = workspace:WaitForChild("Plots")
+local houseModel = game.ServerStorage:WaitForChild("BasicHouse")
+
+local plotOwners = {}
+
+for _, plot in pairs(plotsFolder:GetChildren()) do
+	local claimPart = plot:WaitForChild("ClaimPart")
+	local prompt = claimPart:WaitForChild("ProximityPrompt")
+
+	prompt.Triggered:Connect(function(player)
+
+		-- Plot already taken
+		if plotOwners[plot] then
+			return
+		end
+
+		-- Player already owns plot
+		for p, owner in pairs(plotOwners) do
+			if owner == player then
+				return
+			end
+		end
+
+		-- Assign owner
+		plotOwners[plot] = player
+		
+		local label = claimPart.BillboardGui.TextLabel
+		label.Text = player.Name .. "'s Home"
+
+		-- Spawn house
+		local house = houseModel:Clone()
+		house:SetPrimaryPartCFrame(plot.CFrame + Vector3.new(0,5,0))
+		house.Parent = plot
+
+		-- Disable prompt
+		prompt.Enabled = false
+
+		print(player.Name .. " claimed " .. plot.Name)
+	end)
+end
+
+-- Remove house when player leaves
+game.Players.PlayerRemoving:Connect(function(player)
+
+	for plot, owner in pairs(plotOwners) do
+		if owner == player then
+
+			plotOwners[plot] = nil
+			
+			local label = plot.ClaimPart.BillboardGui.TextLabel
+			label.Text = "Empty Plot"
+
+			-- Re-enable prompt
+			local prompt = plot.ClaimPart:FindFirstChild("ProximityPrompt")
+			if prompt then
+				prompt.Enabled = true
+			end
+
+			-- Remove spawned house
+			for _, child in pairs(plot:GetChildren()) do
+				if child:IsA("Model") then
+					child:Destroy()
+				end
+			end
+		end
+	end
+end)
