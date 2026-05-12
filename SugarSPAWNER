@@ -1,0 +1,107 @@
+-- ============================================================
+-- SugarSpawner
+-- WHERE TO PUT THIS: ServerScriptService
+-- HOW: Right-click ServerScriptService > Insert Object > Script
+--      Then rename it "SugarSpawner"
+-- ============================================================
+
+local ServerStorage = game:GetService("ServerStorage")
+local TweenService  = game:GetService("TweenService")
+
+-- The folder in ServerStorage that holds your 4 sugar parts
+local SugarFolder = ServerStorage:WaitForChild("Sugar")
+
+-- All 4 sugar types (must match the exact names of your Parts)
+local SUGAR_TYPES = {"Tear", "Blot", "Gamma", "Alien"}
+
+-- Rarity weights (higher = more common)
+-- Tear=60%, Blot=25%, Gamma=12%, Alien=3%
+local WEIGHTS = {60, 25, 12, 3}
+
+-- How high above the map the sugar spawns (studs)
+local SPAWN_HEIGHT = 80
+
+-- How many seconds between each sugar drop
+local SPAWN_INTERVAL = 4
+
+-- How long the sugar takes to fall down (seconds)
+local FALL_TIME = 6
+
+-- The area the sugar can randomly spawn over (X and Z range)
+local SPAWN_AREA = 100  -- spawns within -100 to +100 studs from center
+
+-- -------------------------------------------------------
+-- Picks a random sugar type based on rarity weights
+-- -------------------------------------------------------
+local function pickRandomSugar()
+	local totalWeight = 0
+	for _, w in ipairs(WEIGHTS) do
+		totalWeight = totalWeight + w
+	end
+
+	local roll = math.random(1, totalWeight)
+	local cumulative = 0
+	for i, w in ipairs(WEIGHTS) do
+		cumulative = cumulative + w
+		if roll <= cumulative then
+			return SUGAR_TYPES[i]
+		end
+	end
+	return SUGAR_TYPES[1]
+end
+
+-- -------------------------------------------------------
+-- Spawns one sugar piece and makes it fall
+-- -------------------------------------------------------
+local function spawnSugar()
+	local sugarName = pickRandomSugar()
+	local template  = SugarFolder:FindFirstChild(sugarName)
+
+	if not template then
+		warn("Could not find sugar part named: " .. sugarName)
+		return
+	end
+
+	-- Clone the part into the workspace
+	local sugar = template:Clone()
+	sugar.Parent = workspace
+	sugar.Anchored = true  -- keep it still while tweening
+
+	-- Random position in the air
+	local randomX = math.random(-SPAWN_AREA, SPAWN_AREA)
+	local randomZ = math.random(-SPAWN_AREA, SPAWN_AREA)
+	sugar.CFrame = CFrame.new(randomX, SPAWN_HEIGHT, randomZ)
+
+	-- Add a tag so we know if it's been claimed
+	local claimedTag = Instance.new("BoolValue")
+	claimedTag.Name  = "Claimed"
+	claimedTag.Value = false
+	claimedTag.Parent = sugar
+
+	-- Store the sugar type name on the part so we can read it later
+	local nameTag = Instance.new("StringValue")
+	nameTag.Name  = "SugarType"
+	nameTag.Value = sugarName
+	nameTag.Parent = sugar
+
+	-- Make it fall using TweenService
+	local fallGoal = {CFrame = CFrame.new(randomX, 1, randomZ)}
+	local tweenInfo = TweenInfo.new(FALL_TIME, Enum.EasingStyle.Linear)
+	local tween = TweenService:Create(sugar, tweenInfo, fallGoal)
+	tween:Play()
+
+	-- Destroy the sugar if nobody claimed it after it lands
+	tween.Completed:Connect(function()
+		if sugar and sugar.Parent then
+			sugar:Destroy()
+		end
+	end)
+end
+
+-- -------------------------------------------------------
+-- Main loop: keeps spawning sugar forever
+-- -------------------------------------------------------
+while true do
+	task.wait(SPAWN_INTERVAL)
+	spawnSugar()
+end
