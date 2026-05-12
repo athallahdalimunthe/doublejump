@@ -1,0 +1,162 @@
+-- ============================================================
+-- SugarGui  (LocalScript)
+-- WHERE TO PUT THIS:
+--   StarterGui > SugarGui (ScreenGui) > SugarGui (LocalScript)
+-- ============================================================
+
+local Players           = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player    = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = playerGui:WaitForChild("SugarGui")
+local updateEvent = ReplicatedStorage:WaitForChild("UpdateInventory")
+
+-- ============================================================
+--  🎨 CUSTOMIZE YOUR IMAGES HERE
+--  Replace the numbers after "rbxassetid://" with your own
+--  image asset IDs from Roblox (upload images in Creator Hub)
+-- ============================================================
+local sugarInfo = {
+	{
+		name  = "Tear",
+		image = "rbxassetid://119886938516730",  -- ← paste your Tear image ID here
+		color = Color3.fromRGB(100, 180, 255), -- blue tint for the label
+	},
+	{
+		name  = "Blot",
+		image = "rbxassetid://132912745015207",  -- ← paste your Blot image ID here
+		color = Color3.fromRGB(180, 100, 255), -- purple tint
+	},
+	{
+		name  = "Gamma",
+		image = "rbxassetid://115043466139599",  -- ← paste your Gamma image ID here
+		color = Color3.fromRGB(100, 255, 150), -- green tint
+	},
+	{
+		name  = "Alien",
+		image = "rbxassetid://121469657345770",  -- ← paste your Alien image ID here
+		color = Color3.fromRGB(255, 100, 150), -- pink tint
+	},
+}
+-- ============================================================
+
+-- -------------------------------------------------------
+-- Build the panel
+-- -------------------------------------------------------
+
+local ROW_HEIGHT  = 54
+local PANEL_WIDTH = 240
+local TITLE_H     = 40
+local PADDING     = 10
+
+local totalHeight = TITLE_H + (#sugarInfo * (ROW_HEIGHT + 8)) + PADDING
+
+-- Outer frame
+local frame = Instance.new("Frame")
+frame.Name                   = "InventoryFrame"
+frame.Size                   = UDim2.new(0, PANEL_WIDTH, 0, totalHeight)
+frame.Position               = UDim2.new(1, -(PANEL_WIDTH + 16), 0, 16) -- top-right
+frame.BackgroundColor3       = Color3.fromRGB(15, 15, 25)
+frame.BackgroundTransparency = 0.2
+frame.BorderSizePixel        = 0
+frame.Parent                 = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 14)
+corner.Parent = frame
+
+-- Title bar
+local titleBar = Instance.new("Frame")
+titleBar.Name            = "TitleBar"
+titleBar.Size            = UDim2.new(1, 0, 0, TITLE_H)
+titleBar.Position        = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
+titleBar.BorderSizePixel = 0
+titleBar.Parent          = frame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 14)
+titleCorner.Parent = titleBar
+
+-- Title text
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size                 = UDim2.new(1, 0, 1, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text                 = "🍬  Sugar Bag"
+titleLabel.TextColor3           = Color3.fromRGB(30, 20, 0)
+titleLabel.TextScaled           = true
+titleLabel.Font                 = Enum.Font.GothamBold
+titleLabel.Parent               = titleBar
+
+-- -------------------------------------------------------
+-- Build one row per sugar type (image on left, name+count on right)
+-- -------------------------------------------------------
+local countLabels = {}
+
+for i, info in ipairs(sugarInfo) do
+	local yPos = TITLE_H + 8 + (i - 1) * (ROW_HEIGHT + 8)
+
+	-- Row background
+	local row = Instance.new("Frame")
+	row.Name                   = info.name .. "Row"
+	row.Size                   = UDim2.new(1, -16, 0, ROW_HEIGHT)
+	row.Position               = UDim2.new(0, 8, 0, yPos)
+	row.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
+	row.BackgroundTransparency = 0.92
+	row.BorderSizePixel        = 0
+	row.Parent                 = frame
+
+	local rowCorner = Instance.new("UICorner")
+	rowCorner.CornerRadius = UDim.new(0, 10)
+	rowCorner.Parent = row
+
+	-- Sugar image (left side)
+	--   ↓ This ImageLabel uses the image ID you put in sugarInfo above
+	local img = Instance.new("ImageLabel")
+	img.Name                   = "SugarImage"
+	img.Size                   = UDim2.new(0, ROW_HEIGHT - 8, 0, ROW_HEIGHT - 8)
+	img.Position               = UDim2.new(0, 4, 0, 4)
+	img.BackgroundTransparency = 1
+	img.Image                  = info.image
+	img.ScaleType              = Enum.ScaleType.Fit
+	img.Parent                 = row
+
+	-- Sugar name (top-right of row)
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Name                   = "NameLabel"
+	nameLabel.Size                   = UDim2.new(1, -(ROW_HEIGHT + 4), 0, ROW_HEIGHT / 2)
+	nameLabel.Position               = UDim2.new(0, ROW_HEIGHT + 4, 0, 4)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text                   = info.name
+	nameLabel.TextColor3             = info.color
+	nameLabel.TextScaled             = true
+	nameLabel.Font                   = Enum.Font.GothamBold
+	nameLabel.TextXAlignment         = Enum.TextXAlignment.Left
+	nameLabel.Parent                 = row
+
+	-- Count (bottom-right of row)
+	local countLabel = Instance.new("TextLabel")
+	countLabel.Name                   = "CountLabel"
+	countLabel.Size                   = UDim2.new(1, -(ROW_HEIGHT + 4), 0, ROW_HEIGHT / 2 - 4)
+	countLabel.Position               = UDim2.new(0, ROW_HEIGHT + 4, 0, ROW_HEIGHT / 2)
+	countLabel.BackgroundTransparency = 1
+	countLabel.Text                   = "x0"
+	countLabel.TextColor3             = Color3.fromRGB(220, 220, 220)
+	countLabel.TextScaled             = true
+	countLabel.Font                   = Enum.Font.Gotham
+	countLabel.TextXAlignment         = Enum.TextXAlignment.Left
+	countLabel.Parent                 = row
+
+	countLabels[info.name] = countLabel
+end
+
+-- -------------------------------------------------------
+-- Update counts whenever the server sends new inventory data
+-- -------------------------------------------------------
+updateEvent.OnClientEvent:Connect(function(inventory)
+	for sugarName, countLabel in pairs(countLabels) do
+		local count = inventory[sugarName] or 0
+		countLabel.Text = "x" .. count
+	end
+end)
