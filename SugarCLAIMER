@@ -1,0 +1,126 @@
+-- ============================================================
+-- SugarClaimer
+-- WHERE TO PUT THIS: ServerScriptService
+-- HOW: Right-click ServerScriptService > Insert Object > Script
+--      Then rename it "SugarClaimer"
+-- ============================================================
+
+local Players       = game:GetService("Players")
+local DataStoreService = game:GetService("DataStoreService")
+
+-- The DataStore where we save each player's sugar collection
+local SugarStore = DataStoreService:GetDataStore("SugarInventory_v1")
+
+-- We store each player's sugar counts in this table while they're in game
+-- Example: playerData["PlayerName"] = { Tear=5, Blot=2, Gamma=0, Alien=1 }
+local playerData = {}
+
+-- A RemoteEvent so the server can tell the client to update the GUI
+-- We create it here so the GUI script can find it
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local updateEvent = Instance.new("RemoteEvent")
+updateEvent.Name  = "UpdateInventory"
+updateEvent.Parent = ReplicatedStorage
+
+-- -------------------------------------------------------
+-- Default empty inventory for a new player
+-- -------------------------------------------------------
+local function defaultInventory()
+	return { Tear = 0, Blot = 0, Gamma = 0, Alien = 0 }
+end
+
+-- -------------------------------------------------------
+-- Load a player's data from DataStore when they join
+-- -------------------------------------------------------
+local function onPlayerAdded(player)
+	local success, data = pcall(function()
+		return SugarStore:GetAsync(tostring(player.UserId))
+	end)
+
+	if success and data then
+		playerData[player.UserId] = data
+	else
+		playerData[player.UserId] = defaultInventory()
+	end
+
+	print(player.Name .. " joined. Inventory loaded!")
+
+	-- Send the inventory to the player's GUI right away
+	updateEvent:FireClient(player, playerData[player.UserId])
+end
+
+-- -------------------------------------------------------
+-- Save a player's data when they leave
+-- -------------------------------------------------------
+local function onPlayerRemoving(player)
+	local data = playerData[player.UserId]
+	if data then
+		local success, err = pcall(function()
+			SugarStore:SetAsync(tostring(player.UserId), data)
+		end)
+		if success then
+			print(player.Name .. " data saved!")
+		else
+			warn("Failed to save data for " .. player.Name .. ": " .. tostring(err))
+		end
+	end
+	playerData[player.UserId] = nil
+end
+
+-- -------------------------------------------------------
+-- When a sugar part appears in the workspace, hook it up
+-- -------------------------------------------------------
+workspace.ChildAdded:Connect(function(child)
+	-- Only care about Parts (the sugar pieces)
+	if not child:IsA("BasePart") then return end
+
+	-- Wait a tiny moment for the tags to be added by SugarSpawner
+	task.wait(0.05)
+
+	local claimedTag = child:FindFirstChild("Claimed")
+	local typeTag    = child:FindFirstChild("SugarType")
+
+	-- If it doesn't have our tags, it's not a sugar piece we made
+	if not claimedTag or not typeTag then return end
+
+	-- Listen for a player touching this sugar
+	child.Touched:Connect(function(hit)
+		-- Check if it's already been claimed
+		if claimedTag.Value then return end
+
+		-- Figure out which player touched it
+		local character = hit.Parent
+		local player    = Players:GetPlayerFromCharacter(character)
+		if not player then return end
+
+		-- Make sure we have their data loaded
+		local inventory = playerData[player.UserId]
+		if not inventory then return end
+
+		-- CLAIM IT! Mark as claimed so nobody else can grab it
+		claimedTag.Value = true
+
+		-- Add the sugar to their inventory
+		local sugarType = typeTag.Value
+		inventory[sugarType] = (inventory[sugarType] or 0) + 1
+
+		print(player.Name .. " collected 1 " .. sugarType .. "!")
+
+		-- Update the player's on-screen GUI
+		updateEvent:FireClient(player, inventory)
+
+		-- Destroy the sugar part (it's been picked up)
+		child:Destroy()
+	end)
+end)
+
+-- -------------------------------------------------------
+-- Connect the join / leave events
+-- -------------------------------------------------------
+Players.PlayerAdded:Connect(onPlayerAdded)
+Players.PlayerRemoving:Connect(onPlayerRemoving)
+
+-- Handle players who joined before this script loaded
+for _, player in ipairs(Players:GetPlayers()) do
+	onPlayerAdded(player)
+end
